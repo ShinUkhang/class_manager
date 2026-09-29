@@ -74,7 +74,7 @@
       sheets: {
         substitute: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=결보강",  // 결보강 시트 CSV
         homework: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=수행평가_과제",    // 수행평가 시트 CSV
-        lunch: "",    // 급식은 나이스(NEIS) API에서 직접 조회 (아래 neis 설정)
+        lunch: "https://cheongwon.sen.ms.kr/76461/subMenu.do",    // 청원중학교 공식 홈페이지 급식 식단표 (https://cheongwon.sen.ms.kr/)
         birthday: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=생일",  // 생일 시트 CSV
         schedule: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=학사일정"  // 학사일정 시트 CSV (gid=989619611)
       },
@@ -265,7 +265,7 @@
             </div>
             <div class="flex items-center gap-2">
               <span id="lunchCalorie" class="text-xs font-semibold text-orange-600 bg-orange-50 dark:bg-orange-950/40 px-2.5 py-1 rounded-lg">780 kcal</span>
-              <a href="https://school.koreacharts.com/school/meals/B000008228/contents.html" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-orange-700 bg-orange-100 hover:bg-orange-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-xs" title="청원중학교 전체 급식표 열기">
+              <a href="https://cheongwon.sen.ms.kr/76461/subMenu.do" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-orange-700 bg-orange-100 hover:bg-orange-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-xs" title="청원중학교 공식 급식 식단표 열기 (cheongwon.sen.ms.kr)">
                 <span>청원중 급식표</span>
                 <i data-lucide="external-link" class="w-3 h-3"></i>
               </a>
@@ -276,8 +276,11 @@
             <div id="lunchMenu" class="text-base font-semibold leading-relaxed text-slate-800 dark:text-slate-200">
               현미밥, 쇠고기미역국, 돈육간장불고기, 깍두기, 샤인머스캣
             </div>
-            <div id="lunchAllergy" class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-400">
-              알레르기 정보: 대두, 돼지고기, 쇠고기
+            <div id="lunchAllergy" class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-400 flex items-center justify-between">
+              <span>알레르기 정보: 대두, 돼지고기, 쇠고기</span>
+              <a href="https://cheongwon.sen.ms.kr/" target="_blank" rel="noopener noreferrer" class="hover:underline text-[11px] text-orange-600 dark:text-orange-400 font-semibold flex items-center gap-0.5">
+                학교홈페이지 <i data-lucide="chevron-right" class="w-3 h-3"></i>
+              </a>
             </div>
           </div>
         </div>
@@ -478,9 +481,9 @@
         document.getElementById('lunchCalorie').innerText = todayLunch.칼로리 || '';
         document.getElementById('lunchAllergy').innerText = `알레르기 정보: ${todayLunch.알레르기정보 || '해당 없음'}`;
       } else {
-        document.getElementById('lunchMenu').innerText = '오늘 급식 정보가 나이스에 아직 등록되지 않았어요 🍱';
+        document.getElementById('lunchMenu').innerText = '오늘 급식 정보가 나이스에 아직 등록되지 않았거나 휴일입니다 🍱';
         document.getElementById('lunchCalorie').innerText = '';
-        document.getElementById('lunchAllergy').innerText = '';
+        document.getElementById('lunchAllergy').innerHTML = `학교 홈페이지에서 확인: <a href="https://cheongwon.sen.ms.kr/76461/subMenu.do" target="_blank" class="text-orange-600 dark:text-orange-400 font-semibold underline hover:opacity-80">청원중 식단표 보기 &gt;</a>`;
       }
 
       // 생일
