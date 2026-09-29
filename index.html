@@ -61,11 +61,11 @@
   <script>
     const CONFIG = {
       schoolName: "청원중학교",
-      className: "3학년 2반",
+      className: "2학년 1반",
       motto: "서로 존중하며 매일매일 함께 빛나는 우리 ✨",
       // 시간표와 학사일정 캡처 이미지 경로
       images: {
-        timetable: "timetable.png",
+        timetable: "timetable_2_1.png",
         schedule: "schedule.png"
       },
       // 구글 스프레드시트 CSV 링크 및 급식 링크
@@ -75,7 +75,8 @@
         substitute: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=결보강",  // 결보강 시트 CSV
         homework: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=수행평가_과제",    // 수행평가 시트 CSV
         lunch: "",    // 급식은 나이스(NEIS) API에서 직접 조회 (아래 neis 설정)
-        birthday: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=생일"  // 생일 시트 CSV
+        birthday: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=생일",  // 생일 시트 CSV
+        schedule: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=학사일정"  // 학사일정 시트 CSV (gid=989619611)
       },
       // 나이스(NEIS) 교육정보개방포털 급식 조회 설정 (인증키 불필요)
       neis: {
@@ -112,7 +113,7 @@
       <div>
         <div class="flex items-center space-x-2">
           <span class="bg-brand-600 text-white text-xs font-extrabold px-2.5 py-1 rounded-md" id="headerSchool">청원중학교</span>
-          <h1 class="text-2xl sm:text-3xl font-black tracking-tight" id="headerClass">3학년 2반 스마트 알리미</h1>
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tight" id="headerClass">2학년 1반 스마트 알리미</h1>
         </div>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5" id="headerMotto">
           <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
@@ -144,26 +145,56 @@
 
       <!-- ================= 1열: 시간표 ================= -->
       <div class="space-y-6">
-        <!-- 시간표 카드 (사진 캡처 방식) -->
+        <!-- 시간표 카드 (2학년 1반 학급 시간표) -->
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
-          <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-700">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                 <i data-lucide="calendar" class="w-4 h-4"></i>
               </div>
-              <h2 class="font-bold text-lg">우리 반 시간표</h2>
+              <div>
+                <h2 class="font-bold text-lg leading-tight">2학년 1반 시간표</h2>
+                <p class="text-[11px] text-slate-400 font-medium" id="timetableTodayLabel">오늘의 시간표</p>
+              </div>
             </div>
-            <span class="text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md font-semibold">클릭 시 확대 🔍</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="toggleTimetableView()" id="timetableToggleBtn" class="text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-lg font-medium transition">
+                주간 전체
+              </button>
+              <button onclick="openImageModal('timetable_2_1.png', '2학년 1반 학급시간표 원본 (참고자료)')" class="text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 transition">
+                <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i> 원본
+              </button>
+            </div>
           </div>
 
-          <div class="group relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer bg-slate-100 dark:bg-slate-900" onclick="openImageModal(document.getElementById('timetableImg').src, '우리 반 주간 시간표')">
-            <img id="timetableImg" src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=60" alt="시간표 캡처" class="w-full h-44 object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/600x400/2563EB/ffffff?text=시간표+사진'">
-            <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-bold text-sm gap-1.5 backdrop-blur-[2px]">
-              <i data-lucide="zoom-in" class="w-5 h-5"></i> 크게 보기
+          <!-- 오늘 요일 시간표 뷰 -->
+          <div id="todayTimetableView" class="space-y-1.5"></div>
+
+          <!-- 주간 전체 시간표 뷰 (토글) -->
+          <div id="weeklyTimetableView" class="hidden">
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <table class="w-full text-xs text-center border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                    <th class="py-2 px-1 border-r border-slate-200 dark:border-slate-700 w-10">교시</th>
+                    <th class="py-2 px-1 border-r border-slate-200 dark:border-slate-700" id="th-mon">월</th>
+                    <th class="py-2 px-1 border-r border-slate-200 dark:border-slate-700" id="th-tue">화</th>
+                    <th class="py-2 px-1 border-r border-slate-200 dark:border-slate-700" id="th-wed">수</th>
+                    <th class="py-2 px-1 border-r border-slate-200 dark:border-slate-700" id="th-thu">목</th>
+                    <th class="py-2 px-1" id="th-fri">금</th>
+                  </tr>
+                </thead>
+                <tbody id="weeklyTableBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              </table>
             </div>
           </div>
-          <p class="text-xs text-slate-400 mt-2 text-center">💡 AI 사진 인식이 연동된 시간표</p>
+
+          <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400">
+            <span>참고자료: 2학년 학급 시간표 반영</span>
+            <span class="text-blue-600 dark:text-blue-400 font-semibold cursor-pointer hover:underline" onclick="openImageModal('timetable_2_1.png', '2학년 1반 학급시간표 원본')">사진 크게보기 &gt;</span>
+          </div>
         </div>
+
         <!-- 변동 사항(결보강) 상세 카드 -->
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
           <div class="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
@@ -192,24 +223,32 @@
           <div id="homeworkList" class="space-y-3 custom-scroll max-h-[300px] overflow-y-auto pr-1"></div>
         </div>
 
-        <!-- 학교 행사 & 학사일정 카드 -->
+        <!-- 학교 행사 & 학사일정 카드 (구글 스프레드시트 실시간 연동) -->
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
           <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                 <i data-lucide="flag" class="w-4 h-4"></i>
               </div>
-              <h2 class="font-bold text-lg">학교 학사일정표</h2>
+              <div>
+                <h2 class="font-bold text-lg leading-tight">학교 학사일정</h2>
+                <p class="text-[11px] text-teal-600 dark:text-teal-400 font-semibold flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span> 구글 시트 연동
+                </p>
+              </div>
             </div>
-            <span class="text-xs bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300 px-2 py-1 rounded-md font-semibold">클릭 시 확대 🔍</span>
+            <a href="https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/edit?gid=989619611#gid=989619611" target="_blank" rel="noopener noreferrer" class="text-xs bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/60 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 transition">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i> 시트 열기
+            </a>
           </div>
-          <div class="group relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer bg-slate-100 dark:bg-slate-900" onclick="openImageModal(document.getElementById('scheduleImg').src, '월간 학교 학사일정표')">
-            <img id="scheduleImg" src="https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=800&auto=format&fit=crop&q=60" alt="학사일정 캡처" class="w-full h-44 object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/600x400/0D9488/ffffff?text=학사일정+사진'">
-            <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-bold text-sm gap-1.5 backdrop-blur-[2px]">
-              <i data-lucide="zoom-in" class="w-5 h-5"></i> 학사일정 크게 보기
-            </div>
+
+          <!-- 학사일정 리스트 -->
+          <div id="scheduleList" class="space-y-2.5 custom-scroll max-h-[300px] overflow-y-auto pr-1"></div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
+            <span>총 <strong id="scheduleCount" class="text-teal-600 dark:text-teal-400 font-bold">0</strong>개 예정된 일정</span>
+            <span class="text-slate-400">구글 스프레드시트 동기화</span>
           </div>
-          <p class="text-xs text-slate-400 mt-2 text-center">💡 교무부 배포 학사일정표</p>
         </div>
       </div>
 
@@ -274,7 +313,7 @@
 
     <!-- 하단 푸터 -->
     <footer class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <div>© 2026 청원중학교 3-2 학급 알리미 | Google Antigravity</div>
+      <div>© 2026 청원중학교 2-1 학급 알리미 | Google Antigravity</div>
       <div class="flex items-center gap-2">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         <span>구글 시트 · 나이스 급식 실시간 연동</span>
@@ -300,37 +339,52 @@
   <script>
     // 기존 대시보드 로직
     // ========================================================
+    // 2학년 1반 정규 주간 시간표 (참고자료 2학년 학급 시간표.pdf 1페이지 기준)
+    const TIMETABLE_2_1 = {
+      월: ["역사", "국어A", "체육B", "도덕", "기가A", "음악", "창체"],
+      화: ["수학", "체육A", "영어A", "스클", "과학A", "한문"],
+      수: ["국어A", "기가B", "수학", "영어A", "도덕", "미술", "미술"],
+      목: ["창체", "수학", "과학B", "음악", "국어B", "체육B"],
+      금: ["역사", "영어B", "국어B", "수학", "기가B", "과학A", "한문"]
+    };
+
+    let isWeeklyView = false;
+    function toggleTimetableView() {
+      isWeeklyView = !isWeeklyView;
+      const todayView = document.getElementById('todayTimetableView');
+      const weeklyView = document.getElementById('weeklyTimetableView');
+      const toggleBtn = document.getElementById('timetableToggleBtn');
+      if (isWeeklyView) {
+        todayView.classList.add('hidden');
+        weeklyView.classList.remove('hidden');
+        toggleBtn.innerText = "오늘 보기";
+      } else {
+        todayView.classList.remove('hidden');
+        weeklyView.classList.add('hidden');
+        toggleBtn.innerText = "주간 전체";
+      }
+      lucide.createIcons();
+    }
+
+    // 시트 연결 전/네트워크 오류 시 사용할 기본 예시 데이터
     const mockData = {
       substitute: [
-        { 날짜: getTodayYMD(), 교시: "3", 기존과목: "과학", 변경과목: "자습", 보강교사: "박민우", 수업장소: "본교실", 학생안내사항: "수행평가 보고서 개별 작성" }
+        { 날짜: getTodayYMD(), 교시: "3", 기존과목: "수학", 변경과목: "자습", 보강교사: "박민우", 수업장소: "본교실", 학생안내사항: "수행평가 보고서 개별 작성" }
       ],
       homework: [
         { 구분: "수행평가", 과목명: "역사", 제목: "근현대사 인물 신문 만들기", 마감일: getDateOffset(2), 제출방법: "수업 중 제출", 준비물_세부내용: "8절 도화지, 채색도구", 반영비율: "20%" },
         { 구분: "과제", 과목명: "수학", 제목: "3단원 복습 프린트 풀이", 마감일: getDateOffset(0), 제출방법: "교탁 위 제출", 준비물_세부내용: "교과서 54쪽 참고", 반영비율: "-" },
-        { 구분: "수행평가", 과목명: "영어", 제목: "영작문 포트폴리오 제출", 마감일: getDateOffset(5), 제출방법: "구글 클래스룸", 준비물_세부내용: "단어 300자 이상", 반영비율: "15%" }
-      ],
-      lunch: [
-        { 
-          날짜: getTodayYMD(), 
-          식단메뉴: "혼합잡곡밥, 된장찌개, 주꾸미불고기, 고르곤졸라피자, 감자오믈렛, 콩나물무침, 배추김치", 
-          칼로리: "780 kcal", 
-          알레르기정보: "난류(1), 우유(2), 대두(5), 밀(6), 배추김치(9), 돼지고기(10)" 
-        },
-        { 
-          날짜: getDateOffset(1), 
-          식단메뉴: "계란볶음밥(소), 해물쟁반짜장, 유린기, 물만두찜, 두부겨자냉채, 콩나물국, 배추김치, 복숭아음료", 
-          칼로리: "820 kcal", 
-          알레르기정보: "난류(1), 우유(2), 대두(5), 밀(6), 갑각류(9), 돼지고기(10), 복숭아(11), 닭고기(15)" 
-        },
-        { 
-          날짜: getDateOffset(2), 
-          식단메뉴: "발아현미밥, 맑은순대국, 스팸두부김치찜, 아삭이고추된장무침, 갈비살떡갈비, 깍두기, 레몬마들렌", 
-          칼로리: "760 kcal", 
-          알레르기정보: "우유(2), 대두(5), 밀(6), 깍두기(9), 돼지고기(10), 쇠고기(16)" 
-        }
+        { 구분: "수행평가", 과목명: "영어A", 제목: "영작문 포트폴리오 제출", 마감일: getDateOffset(5), 제출방법: "구글 클래스룸", 준비물_세부내용: "단어 300자 이상", 반영비율: "15%" }
       ],
       birthday: [
         { 월: (new Date().getMonth() + 1).toString(), 일: new Date().getDate().toString(), 이름: "이준호", 축하메시지: "준호야 생일 진심으로 축하해! 오늘 하루 가장 멋진 주인공이 되렴!" }
+      ],
+      // 구글 스프레드시트 학사일정 기본 데이터 (gid=989619611)
+      schedule: [
+        { 시작일: "2026-10-22", 종료일: "2026-10-24", 행사명: "2학기 1차 지필평가 (중간고사)", 대상: "전교생", 상세내용: "국영수사과 전과목", 준비물: "컴싸 및 수정테이프" },
+        { 시작일: "2026-11-05", 종료일: "2026-11-05", 행사명: "가을 현장체험학습", 대상: "3학년", 상세내용: "국립중앙박물관 견학", 준비물: "도시락 및 편한 복장" },
+        { 시작일: "2026-11-18", 종료일: "2026-11-18", 행사명: "교내 스포츠클럽 축구 결승전", 대상: "학급대표", 상세내용: "점심시간 운동장", 준비물: "응원도구" },
+        { 시작일: "2026-12-24", 종료일: "2026-12-24", 행사명: "겨울방학식 및 학급 축제", 대상: "전교생", 상세내용: "방학 생활안내 배포", 준비물: "대청소 도구" }
       ]
     };
 
@@ -461,6 +515,108 @@
         birthdayBanner.classList.add('hidden');
       }
 
+      // 2학년 1반 시간표 렌더링
+      renderTimetable(data.substitute);
+
+      // 구글 스프레드시트 학사일정 렌더링
+      renderScheduleList(data.schedule || mockData.schedule);
+
+      lucide.createIcons();
+    }
+
+    function renderTimetable(substituteData) {
+      const now = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const todayDay = days[now.getDay()];
+      const todaySub = (substituteData || []).find(r => r.날짜 === getTodayYMD());
+
+      const todayView = document.getElementById('todayTimetableView');
+      const todayLabel = document.getElementById('timetableTodayLabel');
+      if (!todayView) return;
+
+      const daySubjects = TIMETABLE_2_1[todayDay] || TIMETABLE_2_1['월'];
+      const displayDay = TIMETABLE_2_1[todayDay] ? `${todayDay}요일` : `월요일 (주말/휴일 미리보기)`;
+      todayLabel.innerText = `${displayDay} (${daySubjects.length}교시 수업)`;
+
+      let todayHtml = '';
+      daySubjects.forEach((sub, idx) => {
+        const period = idx + 1;
+        const isChanged = (todaySub && String(todaySub.교시) === String(period));
+        const finalSub = isChanged ? todaySub.변경과목 : sub;
+        
+        todayHtml += `
+          <div class="flex items-center justify-between p-2.5 rounded-xl ${isChanged ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700' : 'bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800'} transition hover:border-blue-200">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-black flex items-center justify-center">${period}</span>
+              <div>
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-100">${finalSub}</span>
+                ${isChanged ? `<span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1.5 line-through opacity-70">${sub}</span>` : ''}
+              </div>
+            </div>
+            ${isChanged ? '<span class="text-[10px] bg-amber-500 text-white font-bold px-2 py-0.5 rounded-full">자습 변동</span>' : `<span class="text-xs text-slate-400 font-medium">${period}교시</span>`}
+          </div>
+        `;
+      });
+      todayView.innerHTML = todayHtml;
+
+      // 주간 테이블 렌더링
+      const weeklyTbody = document.getElementById('weeklyTableBody');
+      if (!weeklyTbody) return;
+      let weeklyHtml = '';
+      for (let p = 1; p <= 7; p++) {
+        weeklyHtml += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+          <td class="py-2 font-bold text-slate-400 border-r border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30">${p}</td>`;
+        ['월', '화', '수', '목', '금'].forEach(d => {
+          const s = TIMETABLE_2_1[d][p - 1] || '-';
+          const isTodayCol = (d === todayDay);
+          const cellBg = isTodayCol ? 'bg-blue-50/70 dark:bg-blue-950/40 font-bold text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300';
+          weeklyHtml += `<td class="py-2 border-r last:border-r-0 border-slate-200 dark:border-slate-700 ${cellBg}">${s}</td>`;
+        });
+        weeklyHtml += `</tr>`;
+      }
+      weeklyTbody.innerHTML = weeklyHtml;
+
+      // 요일 헤더 하이라이트
+      ['mon', 'tue', 'wed', 'thu', 'fri'].forEach((id, i) => {
+        const d = ['월', '화', '수', '목', '금'][i];
+        const th = document.getElementById(`th-${id}`);
+        if (th && d === todayDay) {
+          th.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
+        }
+      });
+    }
+
+    function renderScheduleList(scheduleList) {
+      const container = document.getElementById('scheduleList');
+      const countEl = document.getElementById('scheduleCount');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      countEl.innerText = scheduleList.length;
+
+      scheduleList.forEach(item => {
+        const dday = calculateDDay(item.시작일);
+        const isSameDay = (item.시작일 === item.종료일 || !item.종료일);
+        const dateRangeStr = isSameDay ? item.시작일 : `${item.시작일} ~ ${item.종료일}`;
+        
+        const card = document.createElement('div');
+        card.className = "p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 transition hover:border-teal-300";
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300">${item.대상 || '전교생'}</span>
+                <span class="text-xs text-slate-400 font-medium">📅 ${dateRangeStr}</span>
+              </div>
+              <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 mt-1">${item.행사명}</h3>
+              ${item.상세내용 ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${item.상세내용}</p>` : ''}
+              ${item.준비물 ? `<div class="mt-2 text-[11px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-lg border border-amber-200/60 dark:border-amber-900/60 inline-flex items-center gap-1">🎒 ${item.준비물}</div>` : ''}
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full ${dday.badgeClass} flex-shrink-0">${dday.text}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
       lucide.createIcons();
     }
 
@@ -559,16 +715,18 @@
     }
 
     async function refreshData() {
-      // 구글 시트 3종 병렬 조회 (실패 시 기존 예시 데이터로 대체)
-      const [substitute, homework, birthday] = await Promise.all([
+      // 구글 시트 4종 병렬 조회 (결보강, 수행평가, 생일, 학사일정)
+      const [substitute, homework, birthday, schedule] = await Promise.all([
         fetchSheetCSV(CONFIG.sheets.substitute),
         fetchSheetCSV(CONFIG.sheets.homework),
-        fetchSheetCSV(CONFIG.sheets.birthday)
+        fetchSheetCSV(CONFIG.sheets.birthday),
+        fetchSheetCSV(CONFIG.sheets.schedule)
       ]);
       const data = {
         substitute: substitute || mockData.substitute,
         homework: homework || mockData.homework,
         birthday: birthday || mockData.birthday,
+        schedule: schedule || mockData.schedule,
         lunch: []
       };
       // 급식은 나이스에서 오늘 날짜로 조회
