@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[스타일 A: 토스/애플] 청원중 3-2 스마트 대시보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen p-4 sm:p-8">
+
+  <!-- 스타일 소개 배너 -->
+  <div class="max-w-6xl mx-auto mb-6 bg-white border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <span class="bg-blue-600 text-white text-xs font-black px-3 py-1 rounded-lg">STYLE A</span>
+      <div>
+        <h3 class="font-bold text-sm text-slate-900">토스(Toss) & 애플(Apple) 스타일 미니멀 카드 대시보드</h3>
+        <p class="text-xs text-slate-500">순백색 카드 + 부드러운 그림자(Drop-shadow) + 군더더기 없는 가독성 중심 (중·고등학교 추천)</p>
+      </div>
+    </div>
+    <span class="text-xs text-blue-700 bg-blue-50 px-3 py-1 rounded-full font-bold">전자칠판 가독성 1위 🏆</span>
+  </div>
+
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- 상단 헤더 -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="bg-indigo-600 text-white text-xs font-black px-2.5 py-1 rounded-md">청원중학교</span>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">3학년 2반 스마트 알리미</h1>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+          <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+          서로 존중하며 매일매일 함께 빛나는 우리 ✨
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200 text-right">
+          <div class="text-[11px] font-semibold text-slate-400">2026년 10월 15일 (목)</div>
+          <div class="text-xl font-black text-indigo-600 tabular-nums">09:00:00</div>
+        </div>
+        <button class="px-3.5 py-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-sm hover:bg-emerald-700 transition">
+          출결 관리
+        </button>
+      </div>
+    </header>
+
+    <!-- 3열 카드 그리드 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- 카드 1: 시간표 -->
+      <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+            </div>
+            <h2 class="font-bold text-base text-slate-900">오늘의 시간표 (목)</h2>
+          </div>
+          <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">총 6교시</span>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">1</span>
+              <span class="font-bold text-sm">국어</span>
+            </div>
+            <span class="text-xs text-slate-500">김영희 선생님 (본교실)</span>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">2</span>
+              <span class="font-bold text-sm">수학</span>
+            </div>
+            <span class="text-xs text-slate-500">이철수 선생님 (본교실)</span>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 rounded-lg bg-amber-200 text-amber-900 font-bold text-xs flex items-center justify-center">3</span>
+              <span class="font-bold text-sm text-amber-900">자습 (보강)</span>
+            </div>
+            <span class="text-xs font-bold text-amber-800">과학 대신 자습실시</span>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">4</span>
+              <span class="font-bold text-sm">체육</span>
+            </div>
+            <span class="text-xs text-slate-500">최동석 선생님 (강당)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 카드 2: 수행평가 & 과제 -->
+      <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            </div>
+            <h2 class="font-bold text-base text-slate-900">수행평가 D-Day</h2>
+          </div>
+          <span class="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-bold">자동 계산</span>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">과제</span>
+              <h4 class="font-bold text-sm text-slate-900 mt-1">수학 3단원 복습 프린트</h4>
+              <p class="text-xs text-slate-400 mt-0.5">교탁 위 제출함에 제출</p>
+            </div>
+            <span class="text-xs font-black px-2.5 py-1 rounded-full bg-red-500 text-white animate-pulse">D-Day</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">수행평가</span>
+              <h4 class="font-bold text-sm text-slate-900 mt-1">역사 인물 신문 만들기</h4>
+              <p class="text-xs text-slate-400 mt-0.5">8절 도화지 및 채색도구</p>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500 text-white">D-2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 카드 3: 급식 & 생일 -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
+                <i data-lucide="utensils" class="w-4 h-4"></i>
+              </div>
+              <h2 class="font-bold text-base text-slate-900">오늘의 급식 🍱</h2>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg">780 kcal</span>
+              <a href="https://school.koreacharts.com/school/meals/B000008228/contents.html" target="_blank" class="text-[11px] text-orange-600 hover:underline flex items-center gap-0.5 font-bold">
+                <span>청원중</span>
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </div>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50">
+            <p class="font-bold text-sm text-slate-800 leading-relaxed">혼합잡곡밥, 된장찌개, 감자오믈렛, 콩나물무침, 주꾸미불고기, 고르곤졸라피자, 배추김치</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center font-bold">
+              <i data-lucide="gift" class="w-4 h-4"></i>
+            </div>
+            <h2 class="font-bold text-base text-slate-900">이달의 생일 친구 🎂</h2>
+          </div>
+          <div class="p-3 rounded-2xl bg-pink-50 border border-pink-200 flex items-center justify-between text-xs">
+            <span class="font-black text-pink-900">👑 15번 이준호 (10월 15일)</span>
+            <span class="text-pink-600 font-bold">오늘 생일 축하해! 🎉</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>
