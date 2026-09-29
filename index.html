@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>우리 반 스마트 알리미 & 스마트 출결 대시보드</title>
+  <title>우리 반 스마트 알리미</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,8 +15,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <!-- Canvas Confetti for Birthday celebration -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <!-- html2canvas for Downloadable Pass -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -58,20 +56,13 @@
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
   <!-- ======================================================== -->
-  <!-- [선생님 설정 영역]: 구글 시트, 담임교사 PIN, 일과시간 설정  -->
+  <!-- [선생님 설정 영역]: 구글 시트, 나이스 급식 설정  -->
   <!-- ======================================================== -->
   <script>
     const CONFIG = {
       schoolName: "청원중학교",
       className: "3학년 2반",
-      teacherName: "김선생",
       motto: "서로 존중하며 매일매일 함께 빛나는 우리 ✨",
-      // 🔒 [담임교사 전용 보안 설정]
-      teacherPin: "1234", // 담임선생님 출결 관리 비밀번호(PIN)
-      schoolHours: {
-        start: "08:00",   // 일과 시작 시간
-        end: "16:30"      // 일과 종료 시간
-      },
       // 시간표와 학사일정 캡처 이미지 경로
       images: {
         timetable: "timetable.png",
@@ -84,8 +75,7 @@
         substitute: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=결보강",  // 결보강 시트 CSV
         homework: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=수행평가_과제",    // 수행평가 시트 CSV
         lunch: "",    // 급식은 나이스(NEIS) API에서 직접 조회 (아래 neis 설정)
-        birthday: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=생일",  // 생일 시트 CSV
-        attendanceApi: "" // [선택] 구글 Apps Script 출결 저장 Web App URL
+        birthday: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=생일"  // 생일 시트 CSV
       },
       // 나이스(NEIS) 교육정보개방포털 급식 조회 설정 (인증키 불필요)
       neis: {
@@ -132,25 +122,6 @@
 
       <!-- 상단 액션 바 -->
       <div class="flex flex-wrap items-center gap-2.5">
-        <!-- 🌟 [담임교사 출결 관리 버튼 (PIN 보호)] -->
-        <button onclick="handleAttendanceButtonClick()" class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md transition transform active:scale-95">
-          <i data-lucide="shield-check" class="w-4 h-4"></i>
-          <span id="attendanceBtnText">출결 관리 (담임 전용)</span>
-        </button>
-
-        <!-- 🌟 [담임교사 조퇴 허가증 발급 버튼 (PIN 보호)] -->
-        <button onclick="handleEarlyLeaveButtonClick()" class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-md transition transform active:scale-95">
-          <i data-lucide="file-signature" class="w-4 h-4"></i>
-          <span>조퇴 허가증 발급</span>
-        </button>
-
-        <!-- 교사 권한 상태 뱃지 -->
-        <div id="teacherAuthBadge" class="hidden px-2.5 py-1 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs font-bold flex items-center gap-1">
-          <i data-lucide="unlock" class="w-3.5 h-3.5"></i>
-          <span>담임교사 인증됨</span>
-          <button onclick="logoutTeacher()" title="권한 잠금" class="ml-1 text-slate-400 hover:text-rose-600">✕</button>
-        </div>
-
         <!-- 실시간 시계 -->
         <div class="bg-white dark:bg-slate-800 px-3.5 py-2 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 text-right">
           <div id="clockDate" class="text-[11px] font-semibold text-slate-400">2026-10-15 (목)</div>
@@ -171,7 +142,7 @@
     <!-- 대시보드 3열 그리드 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-      <!-- ================= 1열: 시간표 & 오늘 출결 현황 ================= -->
+      <!-- ================= 1열: 시간표 ================= -->
       <div class="space-y-6">
         <!-- 시간표 카드 (사진 캡처 방식) -->
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
@@ -193,42 +164,6 @@
           </div>
           <p class="text-xs text-slate-400 mt-2 text-center">💡 AI 사진 인식이 연동된 시간표</p>
         </div>
-
-        <!-- 오늘 실시간 출결 현황 위젯 -->
-        <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <i data-lucide="check-square" class="w-4 h-4"></i>
-              </div>
-              <h2 class="font-bold text-lg">오늘의 출결 현황</h2>
-            </div>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500" id="schoolHoursBadge">일과시간 중</span>
-          </div>
-          <div class="grid grid-cols-4 gap-2 text-center">
-            <div class="p-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900">
-              <div class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">출석</div>
-              <div class="text-lg font-black text-emerald-600 mt-0.5" id="statPresent">24명</div>
-            </div>
-            <div class="p-2 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900">
-              <div class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">지각</div>
-              <div class="text-lg font-black text-amber-600 mt-0.5" id="statLate">1명</div>
-            </div>
-            <div class="p-2 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900">
-              <div class="text-[10px] text-rose-700 dark:text-rose-400 font-bold">조퇴</div>
-              <div class="text-lg font-black text-rose-600 mt-0.5" id="statEarly">0명</div>
-            </div>
-            <div class="p-2 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <div class="text-[10px] text-slate-500 font-bold">결석</div>
-              <div class="text-lg font-black text-slate-500 mt-0.5" id="statAbsent">0명</div>
-            </div>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-            <span id="recentAttendanceLog">최근 수정: 25번 최승우 (지각 08:42)</span>
-            <button onclick="handleAttendanceButtonClick()" class="text-brand-600 dark:text-brand-400 font-bold hover:underline">수정/관리 &gt;</button>
-          </div>
-        </div>
-
         <!-- 변동 사항(결보강) 상세 카드 -->
         <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
           <div class="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100 dark:border-slate-700">
@@ -339,211 +274,14 @@
 
     <!-- 하단 푸터 -->
     <footer class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
-      <div>© 2026 청원중학교 3-2 학급 대시보드 & 출결 관리 | Google Antigravity</div>
+      <div>© 2026 청원중학교 3-2 학급 알리미 | Google Antigravity</div>
       <div class="flex items-center gap-2">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span>출결 시스템 보안 보호 활성화 (담임교사 전용)</span>
+        <span>구글 시트 · 나이스 급식 실시간 연동</span>
       </div>
     </footer>
 
   </div>
-
-  <!-- ======================================================== -->
-  <!-- 🔒 모달: 담임교사 PIN 인증 팝업                          -->
-  <!-- ======================================================== -->
-  <div id="pinModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700 text-center">
-      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400 mx-auto flex items-center justify-center mb-3">
-        <i data-lucide="lock" class="w-6 h-6"></i>
-      </div>
-      <h3 class="text-lg font-bold">담임선생님 인증</h3>
-      <p class="text-xs text-slate-400 mt-1">출결 관리 및 허가증 발급은 담임교사 권한(PIN)이 필요합니다.</p>
-      
-      <div class="my-4">
-        <input type="password" id="pinInput" maxlength="6" placeholder="비밀번호(기본: 1234)" class="w-full text-center text-xl tracking-widest font-black py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500" onkeydown="if(event.key==='Enter') verifyPin()">
-        <p id="pinErrorMsg" class="hidden text-rose-500 text-xs font-bold mt-2">비밀번호가 일치하지 않습니다.</p>
-      </div>
-
-      <div class="flex gap-2">
-        <button onclick="closePinModal()" class="flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300">취소</button>
-        <button onclick="verifyPin()" class="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md">인증하기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- 🌟 모달 1: 담임교사 전용 출결 관리 & 상태 수정           -->
-  <!-- ======================================================== -->
-  <div id="attendanceModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-700">
-        <div class="flex items-center gap-2">
-          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center font-bold">
-            <i data-lucide="user-check" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-bold">학급 출결 관리 (담임 권한)</h3>
-              <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">수정 가능</span>
-            </div>
-            <p class="text-xs text-slate-400">일과시간(08:00~16:30) 중에만 학생 출결 상태를 입력/수정할 수 있습니다.</p>
-          </div>
-        </div>
-        <button onclick="closeAttendanceModal()" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
-          <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
-      </div>
-
-      <!-- 모드 선택: 출석 / 지각 / 조퇴 / 결석 -->
-      <div class="flex items-center justify-center gap-2 mb-4 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl">
-        <button id="btnModePresent" onclick="setAttendanceMode('출석')" class="flex-1 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow-sm transition">
-          ☀️ 출석
-        </button>
-        <button id="btnModeLate" onclick="setAttendanceMode('지각')" class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition">
-          🏃‍♂️ 지각
-        </button>
-        <button id="btnModeEarly" onclick="setAttendanceMode('조퇴')" class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition">
-          🏥 조퇴
-        </button>
-        <button id="btnModeAbsent" onclick="setAttendanceMode('결석')" class="flex-1 py-2 text-xs font-bold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition">
-          ⛔ 결석
-        </button>
-      </div>
-
-      <p class="text-[11px] text-slate-500 mb-2 font-medium">💡 학생 버튼을 클릭하면 위에서 선택된 상태로 즉시 변경(수정)됩니다.</p>
-
-      <!-- 학생 버튼 목록 그리드 -->
-      <div class="grid grid-cols-4 sm:grid-cols-5 gap-2.5" id="studentButtonsGrid"></div>
-      
-      <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-        <span class="text-xs text-slate-400">담임교사: <strong>김선생</strong> 선생님</span>
-        <button onclick="closeAttendanceModal()" class="px-5 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs">확인 및 닫기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- 🌟 모달 2: 디지털 조퇴 허가증 발급 & 교사 전자서명        -->
-  <!-- ======================================================== -->
-  <div id="earlyLeaveModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700 max-h-[95vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-700">
-        <div class="flex items-center gap-2">
-          <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400 flex items-center justify-center font-bold">
-            <i data-lucide="file-signature" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-lg font-bold">스마트 조퇴 허가증 발급 (담임 전용)</h3>
-            <p class="text-xs text-slate-400">선생님 전자서명 후 PNG 이미지로 생성되어 학생 폰에 다운로드됩니다.</p>
-          </div>
-        </div>
-        <button onclick="closeEarlyLeaveModal()" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
-          <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
-      </div>
-
-      <!-- 입력 폼 -->
-      <div class="space-y-4 text-xs">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">학생 선택</label>
-            <select id="leaveStudentName" class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-medium"></select>
-          </div>
-          <div>
-            <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">조퇴 일시</label>
-            <input type="text" id="leaveTime" class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-medium" value="2026-10-15 13:30 (4교시 후)">
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1">조퇴 사유</label>
-          <div class="grid grid-cols-3 gap-2 mb-2">
-            <button type="button" onclick="setLeaveReason('병원 진료 (이비인후과)')" class="p-2 border rounded-xl hover:bg-brand-50 hover:border-brand-300 text-left">🏥 병원 진료</button>
-            <button type="button" onclick="setLeaveReason('발열 및 감기몸살')" class="p-2 border rounded-xl hover:bg-brand-50 hover:border-brand-300 text-left">🤒 발열/몸살</button>
-            <button type="button" onclick="setLeaveReason('가정 사정 (가족 행사)')" class="p-2 border rounded-xl hover:bg-brand-50 hover:border-brand-300 text-left">🏠 가정 사정</button>
-          </div>
-          <input type="text" id="leaveReasonInput" placeholder="직접 입력: 예) 치과 진료 및 통증" class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-medium">
-        </div>
-
-        <!-- 전자 서명 캔버스 영역 -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="font-bold text-slate-600 dark:text-slate-300">담임교사 전자 서명 (화면 터치 서명)</label>
-            <button type="button" onclick="clearSignature()" class="text-xs text-rose-500 hover:underline">서명 지우기 🔄</button>
-          </div>
-          <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl bg-white overflow-hidden touch-none relative">
-            <canvas id="signaturePad" width="500" height="130" class="w-full h-32 cursor-crosshair"></canvas>
-            <div id="signPlaceholder" class="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none text-xs">
-              이곳에 터치하여 선생님 서명을 입력하세요 ✍️
-            </div>
-          </div>
-        </div>
-
-        <button onclick="generatePassCard()" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
-          <i data-lucide="award" class="w-4 h-4"></i>
-          조퇴 허가증 정식 발급 및 이미지 생성
-        </button>
-      </div>
-
-      <!-- 발급된 조퇴 허가증 미리보기 -->
-      <div id="passResultArea" class="hidden mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-        <h4 class="font-bold text-sm text-center mb-3 text-emerald-600 flex items-center justify-center gap-1.5">
-          <i data-lucide="check-circle" class="w-4 h-4"></i>
-          조퇴 허가증이 성공적으로 발급되었습니다!
-        </h4>
-
-        <div id="passCard" class="bg-gradient-to-b from-amber-50 to-white text-slate-900 border-2 border-amber-400 rounded-3xl p-6 shadow-xl relative max-w-md mx-auto">
-          <div class="text-center pb-3 border-b-2 border-amber-300">
-            <div class="text-[11px] font-extrabold tracking-widest text-amber-800">청원중학교 학생안전복지부</div>
-            <h2 class="text-2xl font-black tracking-tight text-slate-900 mt-1">조 퇴 허 가 증</h2>
-          </div>
-
-          <div class="py-4 space-y-2.5 text-xs">
-            <div class="flex justify-between border-b border-amber-200 pb-1.5">
-              <span class="text-slate-500 font-bold">소 속:</span>
-              <span class="font-black text-slate-800">3학년 2반</span>
-            </div>
-            <div class="flex justify-between border-b border-amber-200 pb-1.5">
-              <span class="text-slate-500 font-bold">성 명:</span>
-              <span class="font-black text-slate-900 text-sm" id="cardStudentName">15번 이준호</span>
-            </div>
-            <div class="flex justify-between border-b border-amber-200 pb-1.5">
-              <span class="text-slate-500 font-bold">조퇴 일시:</span>
-              <span class="font-bold text-slate-800" id="cardLeaveTime">2026-10-15 13:30</span>
-            </div>
-            <div class="flex justify-between border-b border-amber-200 pb-1.5">
-              <span class="text-slate-500 font-bold">조퇴 사유:</span>
-              <span class="font-bold text-amber-900" id="cardLeaveReason">병원 진료 (이비인후과)</span>
-            </div>
-          </div>
-
-          <p class="text-[11px] text-center text-slate-500 leading-relaxed mt-1">
-            위 학생은 정당한 사유로 조퇴를 허가하오니<br>교문 통과 및 안전 귀가를 확인하여 주시기 바랍니다.
-          </p>
-
-          <div class="mt-4 pt-3 border-t border-amber-200 flex items-center justify-between">
-            <div class="text-[11px] text-slate-400">발급일: <span id="cardIssueDate">2026-10-15</span></div>
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-xs">담임교사 서명:</span>
-              <img id="cardSignatureImg" src="" alt="서명" class="h-8 object-contain">
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 flex gap-2 justify-center">
-          <button onclick="downloadPassImage()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            조퇴증 이미지(PNG) 다운로드
-          </button>
-          <button onclick="closeEarlyLeaveModal()" class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 font-bold text-xs">
-            확인 및 창닫기
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- 이미지 확대 모달 -->
   <div id="imageModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeImageModal()">
     <div class="relative max-w-4xl w-full bg-white dark:bg-slate-800 rounded-3xl p-4 shadow-2xl" onclick="event.stopPropagation()">
@@ -559,338 +297,7 @@
     </div>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- 자바스크립트 로직 (보안 PIN, 일과시간 검사, 출결 수정 등) -->
-  <!-- ======================================================== -->
   <script>
-    // 1. 상태 변수
-    let isTeacherAuthenticated = false; // 담임교사 인증 상태
-    let pendingAction = null; // 인증 후 실행할 작업 ('attendance' 또는 'earlyLeave')
-
-    const STUDENTS = [
-      { 번호: 1, 이름: "강민준" }, { 번호: 2, 이름: "김도윤" }, { 번호: 3, 이름: "김민서" },
-      { 번호: 4, 이름: "김서준" }, { 번호: 5, 이름: "김시우" }, { 번호: 6, 이름: "김예은" },
-      { 번호: 7, 이름: "김지호" }, { 번호: 8, 이름: "김하은" }, { 번호: 9, 이름: "박민우" },
-      { 번호: 10, 이름: "박서연" }, { 번호: 11, 이름: "박예준" }, { 번호: 12, 이름: "박지민" },
-      { 번호: 13, 이름: "배수빈" }, { 번호: 14, 이름: "서현우" }, { 번호: 15, 이름: "이준호" },
-      { 번호: 16, 이름: "이지원" }, { 번호: 17, 이름: "임채원" }, { 번호: 18, 이름: "장우진" },
-      { 번호: 19, 이름: "정다은" }, { 번호: 20, 이름: "정수아" }, { 번호: 21, 이름: "조은우" },
-      { 번호: 22, 이름: "최동현" }, { 번호: 23, 이름: "최서아" }, { 번호: 24, 이름: "최승우" },
-      { 번호: 25, 이름: "황지안" }
-    ];
-
-    let currentAttendanceMode = "출석";
-    let attendanceRecords = {};
-
-    // 🔒 [일과 시간 검사 함수] (08:00 ~ 16:30, 평일)
-    function checkSchoolHours() {
-      const now = new Date();
-      const day = now.getDay(); // 0(일), 6(토)
-      if (day === 0 || day === 6) {
-        return { allowed: false, message: "오늘은 주말입니다. 일과시간(평일 08:00~16:30) 중에만 출결을 수정할 수 있습니다." };
-      }
-
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const [startH, startM] = CONFIG.schoolHours.start.split(':').map(Number);
-      const [endH, endM] = CONFIG.schoolHours.end.split(':').map(Number);
-      const startMinutes = startH * 60 + startM;
-      const endMinutes = endH * 60 + endM;
-
-      if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
-        return { 
-          allowed: false, 
-          message: `현재는 일과시간 외입니다.\n일과시간(${CONFIG.schoolHours.start} ~ ${CONFIG.schoolHours.end}) 중에만 출결을 입력/수정할 수 있습니다.` 
-        };
-      }
-      return { allowed: true };
-    }
-
-    // 출결 관리 버튼 클릭 시 (시간 검사 + PIN 검사)
-    function handleAttendanceButtonClick() {
-      const hoursCheck = checkSchoolHours();
-      if (!hoursCheck.allowed) {
-        alert(`⚠️ [출결 관리 제한]\n${hoursCheck.message}`);
-        return;
-      }
-
-      if (!isTeacherAuthenticated) {
-        pendingAction = 'attendance';
-        openPinModal();
-      } else {
-        openAttendanceModal();
-      }
-    }
-
-    // 조퇴 허가증 버튼 클릭 시
-    function handleEarlyLeaveButtonClick() {
-      if (!isTeacherAuthenticated) {
-        pendingAction = 'earlyLeave';
-        openPinModal();
-      } else {
-        openEarlyLeaveModal();
-      }
-    }
-
-    // PIN 모달 제어
-    function openPinModal() {
-      document.getElementById('pinInput').value = '';
-      document.getElementById('pinErrorMsg').classList.add('hidden');
-      document.getElementById('pinModal').classList.remove('hidden');
-      setTimeout(() => document.getElementById('pinInput').focus(), 100);
-    }
-    function closePinModal() {
-      document.getElementById('pinModal').classList.add('hidden');
-      pendingAction = null;
-    }
-
-    function verifyPin() {
-      const input = document.getElementById('pinInput').value;
-      if (input === CONFIG.teacherPin) {
-        isTeacherAuthenticated = true;
-        closePinModal();
-        document.getElementById('teacherAuthBadge').classList.remove('hidden');
-
-        if (pendingAction === 'attendance') {
-          openAttendanceModal();
-        } else if (pendingAction === 'earlyLeave') {
-          openEarlyLeaveModal();
-        }
-      } else {
-        document.getElementById('pinErrorMsg').classList.remove('hidden');
-      }
-    }
-
-    function logoutTeacher() {
-      isTeacherAuthenticated = false;
-      document.getElementById('teacherAuthBadge').classList.add('hidden');
-      alert("담임교사 권한이 잠겼습니다.");
-    }
-
-    // 출석 모달 열기
-    function openAttendanceModal() {
-      document.getElementById('attendanceModal').classList.remove('hidden');
-      renderStudentButtons();
-    }
-    function closeAttendanceModal() {
-      document.getElementById('attendanceModal').classList.add('hidden');
-    }
-
-    function setAttendanceMode(mode) {
-      currentAttendanceMode = mode;
-      const bP = document.getElementById('btnModePresent');
-      const bL = document.getElementById('btnModeLate');
-      const bE = document.getElementById('btnModeEarly');
-      const bA = document.getElementById('btnModeAbsent');
-
-      bP.className = "flex-1 py-2 text-xs font-bold rounded-xl transition " + (mode === '출석' ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-400");
-      bL.className = "flex-1 py-2 text-xs font-bold rounded-xl transition " + (mode === '지각' ? "bg-amber-500 text-white shadow-sm" : "text-slate-600 dark:text-slate-400");
-      bE.className = "flex-1 py-2 text-xs font-bold rounded-xl transition " + (mode === '조퇴' ? "bg-rose-500 text-white shadow-sm" : "text-slate-600 dark:text-slate-400");
-      bA.className = "flex-1 py-2 text-xs font-bold rounded-xl transition " + (mode === '결석' ? "bg-slate-700 text-white shadow-sm" : "text-slate-600 dark:text-slate-400");
-    }
-
-    function renderStudentButtons() {
-      const grid = document.getElementById('studentButtonsGrid');
-      grid.innerHTML = '';
-
-      STUDENTS.forEach(s => {
-        const record = attendanceRecords[s.번호];
-        const btn = document.createElement('button');
-        
-        let colorClass = "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-emerald-400";
-        let statusBadge = "미체크";
-        let statusColor = "text-slate-400";
-
-        if (record) {
-          if (record.상태 === '출석') {
-            colorClass = "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 font-bold";
-            statusBadge = `출석 ${record.시간}`;
-            statusColor = "text-emerald-600 dark:text-emerald-400";
-          } else if (record.상태 === '지각') {
-            colorClass = "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 font-bold";
-            statusBadge = `지각 ${record.시간}`;
-            statusColor = "text-amber-600 dark:text-amber-400";
-          } else if (record.상태 === '조퇴') {
-            colorClass = "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 font-bold";
-            statusBadge = `조퇴 ${record.시간}`;
-            statusColor = "text-rose-600 dark:text-rose-400";
-          } else if (record.상태 === '결석') {
-            colorClass = "bg-slate-200 dark:bg-slate-700 border-slate-400 text-slate-800 dark:text-slate-200 font-bold";
-            statusBadge = `결석`;
-            statusColor = "text-slate-600 dark:text-slate-300";
-          }
-        }
-
-        btn.className = `p-2.5 rounded-2xl border flex flex-col items-center justify-center transition transform active:scale-95 ${colorClass}`;
-        btn.innerHTML = `
-          <span class="text-[10px] text-slate-400">${s.번호}번</span>
-          <span class="font-extrabold text-xs mt-0.5">${s.이름}</span>
-          <span class="text-[9.5px] mt-1 font-semibold ${statusColor}">${statusBadge}</span>
-        `;
-        // 클릭 시 출결 수정 실행
-        btn.onclick = () => modifyStudentAttendance(s);
-        grid.appendChild(btn);
-      });
-    }
-
-    // 학생 출결 수정 (담임 권한 + 일과시간 체크)
-    function modifyStudentAttendance(student) {
-      const hoursCheck = checkSchoolHours();
-      if (!hoursCheck.allowed) {
-        alert(hoursCheck.message);
-        return;
-      }
-
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      
-      attendanceRecords[student.번호] = {
-        이름: student.이름,
-        번호: student.번호,
-        상태: currentAttendanceMode,
-        시간: timeStr
-      };
-
-      // 구글 스프레드시트 Apps Script 연동 전송
-      if (CONFIG.sheets.attendanceApi) {
-        fetch(CONFIG.sheets.attendanceApi, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: getTodayYMD(),
-            number: student.번호,
-            name: student.이름,
-            status: currentAttendanceMode,
-            time: timeStr
-          })
-        }).catch(e => console.log("시트 전송:", e));
-      }
-
-      renderStudentButtons();
-      updateAttendanceStats();
-      document.getElementById('recentAttendanceLog').innerText = `최근 수정: ${student.번호}번 ${student.이름} (${currentAttendanceMode} ${timeStr})`;
-
-      if (currentAttendanceMode === '출석') {
-        fireConfettiMini();
-      }
-    }
-
-    function updateAttendanceStats() {
-      let p = 0, l = 0, e = 0, a = 0;
-      Object.values(attendanceRecords).forEach(r => {
-        if (r.상태 === '출석') p++;
-        if (r.상태 === '지각') l++;
-        if (r.상태 === '조퇴') e++;
-        if (r.상태 === '결석') a++;
-      });
-      document.getElementById('statPresent').innerText = `${p}명`;
-      document.getElementById('statLate').innerText = `${l}명`;
-      document.getElementById('statEarly').innerText = `${e}명`;
-      document.getElementById('statAbsent').innerText = `${a}명`;
-    }
-
-    function fireConfettiMini() {
-      if (typeof confetti === 'function') confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
-    }
-
-    // ========================================================
-    // 조퇴 허가증 & 전자 서명 패드
-    // ========================================================
-    let canvas, ctx, isDrawing = false;
-
-    function openEarlyLeaveModal() {
-      document.getElementById('earlyLeaveModal').classList.remove('hidden');
-      document.getElementById('passResultArea').classList.add('hidden');
-      
-      const select = document.getElementById('leaveStudentName');
-      select.innerHTML = '';
-      STUDENTS.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = `${s.번호}번 ${s.이름}`;
-        opt.innerText = `${s.번호}번 ${s.이름}`;
-        select.appendChild(opt);
-      });
-
-      setTimeout(initSignaturePad, 100);
-    }
-    function closeEarlyLeaveModal() {
-      document.getElementById('earlyLeaveModal').classList.add('hidden');
-    }
-
-    function setLeaveReason(reason) {
-      document.getElementById('leaveReasonInput').value = reason;
-    }
-
-    function initSignaturePad() {
-      canvas = document.getElementById('signaturePad');
-      ctx = canvas.getContext('2d');
-      ctx.strokeStyle = '#0F172A';
-      ctx.lineWidth = 2.5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      function startDraw(e) {
-        isDrawing = true;
-        document.getElementById('signPlaceholder').style.display = 'none';
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-      }
-      function draw(e) {
-        if (!isDrawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-      }
-      function endDraw() { isDrawing = false; }
-
-      canvas.addEventListener('mousedown', startDraw);
-      canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', endDraw);
-      canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
-      canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-      canvas.addEventListener('touchend', endDraw);
-    }
-
-    function clearSignature() {
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        document.getElementById('signPlaceholder').style.display = 'flex';
-      }
-    }
-
-    function generatePassCard() {
-      const studentName = document.getElementById('leaveStudentName').value;
-      const leaveTime = document.getElementById('leaveTime').value;
-      const leaveReason = document.getElementById('leaveReasonInput').value || "개인 사유";
-
-      const signDataUrl = canvas.toDataURL('image/png');
-      document.getElementById('cardSignatureImg').src = signDataUrl;
-
-      document.getElementById('cardStudentName').innerText = studentName;
-      document.getElementById('cardLeaveTime').innerText = leaveTime;
-      document.getElementById('cardLeaveReason').innerText = leaveReason;
-      document.getElementById('cardIssueDate').innerText = getTodayYMD();
-
-      document.getElementById('passResultArea').classList.remove('hidden');
-      fireConfetti();
-    }
-
-    function downloadPassImage() {
-      const card = document.getElementById('passCard');
-      html2canvas(card, { scale: 2 }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `조퇴허가증_${document.getElementById('cardStudentName').innerText.replace(/\s+/g, '_')}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      });
-    }
-
-    // ========================================================
     // 기존 대시보드 로직
     // ========================================================
     const mockData = {
@@ -1174,14 +581,6 @@
       document.getElementById('headerSchool').innerText = CONFIG.schoolName;
       document.getElementById('headerClass').innerText = CONFIG.className;
       document.getElementById('headerMotto').innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> ${CONFIG.motto}`;
-      
-      // 모의 출결 데이터 세팅 (24명 출석, 1명 지각)
-      for (let i = 1; i <= 24; i++) {
-        attendanceRecords[i] = { 번호: i, 이름: STUDENTS[i-1].이름, 상태: '출석', 시간: '08:24' };
-      }
-      attendanceRecords[25] = { 번호: 25, 이름: STUDENTS[24].이름, 상태: '지각', 시간: '08:42' };
-      updateAttendanceStats();
-
       refreshData();
     });
   </script>
