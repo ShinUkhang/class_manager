@@ -78,12 +78,19 @@
         schedule: "schedule.png"
       },
       // 구글 스프레드시트 CSV 링크 및 급식 링크
+      // 시트 ID: 학급대시보드 관리 시트 (공개 시트이므로 키 없이 CSV로 읽음)
+      spreadsheetId: "1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY",
       sheets: {
-        substitute: "",  // 결보강 시트 CSV
-        homework: "",    // 수행평가 시트 CSV
-        lunch: "https://school.koreacharts.com/school/meals/B000008228/contents.html", // 서울 청원중학교 급식 메뉴 링크
-        birthday: "",    // 생일 시트 CSV
+        substitute: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=결보강",  // 결보강 시트 CSV
+        homework: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=수행평가_과제",    // 수행평가 시트 CSV
+        lunch: "",    // 급식은 나이스(NEIS) API에서 직접 조회 (아래 neis 설정)
+        birthday: "https://docs.google.com/spreadsheets/d/1ixTBnYydfwo40Dby6wyZE9Bfi-s9IBYV3CrqlLF43vY/gviz/tq?tqx=out:csv&sheet=생일",  // 생일 시트 CSV
         attendanceApi: "" // [선택] 구글 Apps Script 출결 저장 Web App URL
+      },
+      // 나이스(NEIS) 교육정보개방포털 급식 조회 설정 (인증키 불필요)
+      neis: {
+        atptCode: "B10",      // 서울특별시교육청
+        schoolCode: "7051208" // 청원중학교
       }
     };
   </script>
@@ -1003,12 +1010,16 @@
         homeworkList.appendChild(div);
       });
 
-      // 급식
-      const todayLunch = (data.lunch || []).find(r => r.날짜 === getTodayYMD()) || (data.lunch ? data.lunch[0] : null);
+      // 급식 (나이스 NEIS API에서 오늘 날짜로 조회)
+      const todayLunch = (data.lunch || []).find(r => r.날짜 === getTodayYMD()) || null;
       if (todayLunch) {
         document.getElementById('lunchMenu').innerText = todayLunch.식단메뉴 || '급식 정보 없음';
         document.getElementById('lunchCalorie').innerText = todayLunch.칼로리 || '';
         document.getElementById('lunchAllergy').innerText = `알레르기 정보: ${todayLunch.알레르기정보 || '해당 없음'}`;
+      } else {
+        document.getElementById('lunchMenu').innerText = '오늘 급식 정보가 나이스에 아직 등록되지 않았어요 🍱';
+        document.getElementById('lunchCalorie').innerText = '';
+        document.getElementById('lunchAllergy').innerText = '';
       }
 
       // 생일
@@ -1032,11 +1043,131 @@
         birthdayList.appendChild(row);
       });
 
+      // 오늘이 생일인 친구가 있으면 상단 축하 배너 표시
+      const todayBirthdays = (data.birthday || []).filter(b => b.월 === currentMonth && b.일 === currentDay);
+      const birthdayBanner = document.getElementById('birthdayBanner');
+      if (todayBirthdays.length > 0) {
+        birthdayBanner.classList.remove('hidden');
+        const bNames = todayBirthdays.map(b => b.이름).join(', ');
+        document.getElementById('birthdayMessage').innerText = `오늘은 ${bNames}의 생일입니다! 🎂 (클릭 시 폭죽 발사 🎉)`;
+      } else {
+        birthdayBanner.classList.add('hidden');
+      }
+
       lucide.createIcons();
     }
 
+    // ========================================================
+    // 실시간 데이터 연동: 구글 시트 CSV + 나이스(NEIS) 급식 API
+    // ========================================================
+    // CSV 파서 (따옴표로 감싼 필드 처리)
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], field = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+          if (c === '"') {
+            if (text[i + 1] === '"') { field += '"'; i++; }
+            else { inQuotes = false; }
+          } else { field += c; }
+        } else {
+          if (c === '"') { inQuotes = true; }
+          else if (c === ',') { row.push(field); field = ''; }
+          else if (c === '\n' || c === '\r') {
+            if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+            row = []; field = '';
+            if (c === '\r' && text[i + 1] === '\n') i++;
+          } else { field += c; }
+        }
+      }
+      if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+      return rows;
+    }
+
+    // 구글 시트 공개 CSV 읽기 (첫 행=헤더, 객체 배열로 변환)
+    async function fetchSheetCSV(url) {
+      if (!url) return null;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rows = parseCSV(await res.text());
+        if (rows.length < 2) return [];
+        const header = rows[0].map(h => h.trim());
+        return rows.slice(1)
+          .filter(r => r.some(cell => (cell || '').trim() !== ''))
+          .map(r => {
+            const obj = {};
+            header.forEach((h, i) => { obj[h] = (r[i] || '').trim(); });
+            return obj;
+          });
+      } catch (e) {
+        console.warn('구글 시트 불러오기 실패:', e);
+        return null;
+      }
+    }
+
+    // 나이스 알레르기 유발식품 코드표 (1~19)
+    const ALLERGY_MAP = {
+      '1': '난류', '2': '우유', '3': '메밀', '4': '땅콩', '5': '대두',
+      '6': '밀', '7': '고등어', '8': '게', '9': '새우', '10': '돼지고기',
+      '11': '복숭아', '12': '토마토', '13': '아황산염', '14': '호두',
+      '15': '닭고기', '16': '쇠고기', '17': '오징어', '18': '조개류', '19': '잣'
+    };
+
+    // 나이스(NEIS) 교육정보개방포털에서 오늘 급식 조회
+    async function fetchNeisLunch() {
+      try {
+        const ymd = getTodayYMD().replace(/-/g, '');
+        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=10`
+          + `&ATPT_OFCDC_SC_CODE=${CONFIG.neis.atptCode}&SD_SCHUL_CODE=${CONFIG.neis.schoolCode}&MLSV_YMD=${ymd}`;
+        const res = await fetch(url);
+        const json = await res.json();
+        const info = json.mealServiceDietInfo;
+        if (!info || !info[1] || !info[1].row || info[1].row.length === 0) return null;
+        // 중식 우선, 없으면 첫 번째 식사
+        const row = info[1].row.find(r => (r.MMEAL_SC_NM || '').includes('중식')) || info[1].row[0];
+        const dishes = String(row.DDISH_NM || '').split('<br/>').map(s => s.trim()).filter(Boolean);
+        const menuNames = dishes.map(d => d.replace(/\s*\([\d.]+\)\s*/g, '').trim()).filter(Boolean);
+        // 메뉴에 표시된 알레르기 코드를 한글명으로 변환
+        const codes = new Set();
+        dishes.forEach(d => {
+          const m = d.match(/\(([\d.]+)\)/);
+          if (m) m[1].split('.').forEach(c => { if (c) codes.add(c); });
+        });
+        const allergyText = [...codes]
+          .sort((a, b) => Number(a) - Number(b))
+          .map(c => `${ALLERGY_MAP[c] || '기타'}(${c})`)
+          .join(', ');
+        return {
+          날짜: getTodayYMD(),
+          식단메뉴: menuNames.join(', '),
+          칼로리: row.CAL_INFO || '',
+          알레르기정보: allergyText || '해당 없음'
+        };
+      } catch (e) {
+        console.warn('나이스 급식 조회 실패:', e);
+        return null;
+      }
+    }
+
     async function refreshData() {
-      renderDashboard(mockData);
+      // 구글 시트 3종 병렬 조회 (실패 시 기존 예시 데이터로 대체)
+      const [substitute, homework, birthday] = await Promise.all([
+        fetchSheetCSV(CONFIG.sheets.substitute),
+        fetchSheetCSV(CONFIG.sheets.homework),
+        fetchSheetCSV(CONFIG.sheets.birthday)
+      ]);
+      const data = {
+        substitute: substitute || mockData.substitute,
+        homework: homework || mockData.homework,
+        birthday: birthday || mockData.birthday,
+        lunch: []
+      };
+      // 급식은 나이스에서 오늘 날짜로 조회
+      const neisLunch = await fetchNeisLunch();
+      if (neisLunch) data.lunch = [neisLunch];
+      renderDashboard(data);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
