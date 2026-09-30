@@ -300,21 +300,17 @@
           </span>
         </div>
 
-        <!-- 오늘의 알레르기 유발 식품 한 줄 요약 (Requirement 2) -->
-        <div id="allergySummaryBanner" class="mt-3 px-3.5 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 flex items-start sm:items-center gap-2 text-xs font-bold text-red-700 dark:text-red-300">
+        <!-- 오늘의 알레르기 유발 식품 한 줄 요약 (급식 정보 있을 때만 표시) -->
+        <div id="allergySummaryBanner" class="hidden mt-3 px-3.5 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 flex items-start sm:items-center gap-2 text-xs font-bold text-red-700 dark:text-red-300">
           <span class="flex-shrink-0">⚠️</span>
-          <span id="allergySummaryText" class="leading-relaxed">오늘의 알레르기 유발 식품: 확인 중...</span>
+          <span id="allergySummaryText" class="leading-relaxed"></span>
         </div>
 
         <div class="mt-3 bg-[#FFFDF5] dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-2xl p-4">
-          <div id="mealList" class="space-y-1.5 text-base md:text-lg font-extrabold text-amber-950 dark:text-amber-100">
-            <div class="text-center py-4 text-sm text-amber-700 dark:text-amber-300 font-medium">
-              오늘 등록된 급식 정보가 없어요 🍱
-            </div>
-          </div>
+          <div id="mealList" class="min-h-[140px] space-y-1.5 text-base md:text-lg font-extrabold text-amber-950 dark:text-amber-100"></div>
 
-          <div class="mt-4 pt-3 border-t border-amber-200/50 dark:border-amber-900/50 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300 font-bold">
-            <span id="mealCalories">-</span>
+          <div id="mealFooter" class="hidden mt-4 pt-3 border-t border-amber-200/50 dark:border-amber-900/50 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300 font-bold">
+            <span id="mealCalories"></span>
             <span class="text-toss-textMuted dark:text-gray-400 text-[10px]">알레르기 번호 빨간색 강조 표기</span>
           </div>
         </div>
@@ -1166,6 +1162,8 @@
       const mealSourceLabel = document.getElementById('mealSourceLabel');
       const mealListEl = document.getElementById('mealList');
       const mealCalEl = document.getElementById('mealCalories');
+      const mealFooter = document.getElementById('mealFooter');
+      const allergyBannerEl = document.getElementById('allergySummaryBanner');
       const allergySummaryEl = document.getElementById('allergySummaryText');
 
       try {
@@ -1175,18 +1173,21 @@
         const d = String(now.getDate()).padStart(2, '0');
         const todayStr = `${y}${m}${d}`;
 
-        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=1&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7041168&MLSV_YMD=${todayStr}`;
+        // 서울 청원중학교 (B10, 7051208) 나이스 급식 API
+        const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=1&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7051208&MLSV_YMD=${todayStr}`;
         
         const response = await fetch(url);
         if (!response.ok) throw new Error("NEIS API Response Error");
         const data = await response.json();
 
-        if (data.mealServiceDietInfo && data.mealServiceDietInfo[1].row) {
+        if (data.mealServiceDietInfo && data.mealServiceDietInfo[1] && data.mealServiceDietInfo[1].row) {
           const mealRow = data.mealServiceDietInfo[1].row[0];
           const rawDish = mealRow.DDISH_NM.replace(/<br\/>/g, '\n');
           const calories = mealRow.CAL_INFO;
 
           mealCalEl.textContent = `⚡ ${calories}`;
+          if (mealFooter) mealFooter.classList.remove('hidden');
+
           const lines = rawDish.split('\n').filter(Boolean);
           const todayAllergenSet = new Set();
 
@@ -1213,21 +1214,22 @@
                 });
               }
 
-              // 숫자 코드(알레르기 유발 식품 번호) 빨간색으로 표시 (Requirement 1)
+              // 숫자 코드(알레르기 유발 식품 번호) 빨간색으로 표시
               allergyTag = `<span class="text-red-500 dark:text-red-400 font-black text-xs md:text-sm ml-1.5 tabular-nums">${allergyStr}</span>`;
             }
 
             return `<div class="flex items-center justify-between"><span>${dishName}${allergyTag}</span></div>`;
           }).join('');
 
-          // 2. 오늘의 알레르기 유발 식품 한 줄 요약 (Requirement 2)
-          if (allergySummaryEl) {
+          // 2. 오늘의 알레르기 유발 식품 한 줄 요약
+          if (allergySummaryEl && allergyBannerEl) {
             const sortedAllergens = Array.from(todayAllergenSet).sort((a, b) => a - b);
             if (sortedAllergens.length > 0) {
               const summaryList = sortedAllergens.map(n => `${ALLERGY_MAP[n]}(${n})`).join('·');
               allergySummaryEl.textContent = `오늘의 알레르기 유발 식품: ${summaryList}`;
+              allergyBannerEl.classList.remove('hidden');
             } else {
-              allergySummaryEl.textContent = `오늘의 알레르기 유발 식품: 해당 정보 없음`;
+              allergyBannerEl.classList.add('hidden');
             }
           }
 
@@ -1238,15 +1240,11 @@
         }
       } catch (err) {
         mealSourceLabel.textContent = "나이스(NEIS) 조회";
-        mealListEl.innerHTML = `
-          <div class="text-center py-4 text-sm text-amber-700 dark:text-amber-300 font-medium">
-            오늘 등록된 급식 정보가 없어요 🍱
-          </div>
-        `;
-        mealCalEl.textContent = "-";
-        if (allergySummaryEl) {
-          allergySummaryEl.textContent = "오늘의 알레르기 유발 식품: 등록된 급식 정보가 없어요";
-        }
+        // 서울 청원중학교 나이스 급식정보가 없으면 빈칸 표시
+        mealListEl.innerHTML = '';
+        mealCalEl.textContent = '';
+        if (mealFooter) mealFooter.classList.add('hidden');
+        if (allergyBannerEl) allergyBannerEl.classList.add('hidden');
       }
     }
 
