@@ -611,9 +611,20 @@
     }
 
     function parseDateObj(dateStr) {
-      if (!dateStr) return null;
-      const clean = dateStr.replace(/[.\/]/g, '-').trim();
-      const parts = clean.split('-');
+      if (!dateStr || typeof dateStr !== 'string') return null;
+
+      // "2026년 9월 30일", "9월 30일", "9월30일" 등 한글 날짜 처리
+      const korMatch = dateStr.match(/(?:(\d{4})년?\s*)?(\d{1,2})월\s*(\d{1,2})일?/);
+      if (korMatch) {
+        const y = korMatch[1] ? parseInt(korMatch[1], 10) : new Date().getFullYear();
+        const m = parseInt(korMatch[2], 10);
+        const d = parseInt(korMatch[3], 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) return new Date(y, m - 1, d);
+      }
+
+      // "2026.09.30", "2026-09-30", "9.30", "9/30" 등 처리
+      const clean = dateStr.replace(/[.\/]/g, '-').replace(/\s+/g, '').trim();
+      const parts = clean.split('-').filter(Boolean);
       let y, m, d;
       if (parts.length === 3) {
         y = parseInt(parts[0], 10);
@@ -628,6 +639,22 @@
       }
       if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
       return new Date(y, m - 1, d);
+    }
+
+    // 공지사항 날짜가 오늘보다 이전(어제 또는 그 이전)으로 지났는지 확인하는 함수
+    function isNoticeExpired(dateStr) {
+      if (!dateStr) return false;
+      let targetStr = dateStr;
+      if (dateStr.includes('~')) {
+        const parts = dateStr.split('~');
+        targetStr = parts[parts.length - 1].trim();
+      }
+      const dObj = parseDateObj(targetStr);
+      if (!dObj) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      dObj.setHours(0, 0, 0, 0);
+      return dObj.getTime() < today.getTime();
     }
 
     function calculateDDay(targetDateObj) {
@@ -954,9 +981,6 @@
         }).filter(n => n.title || n.content);
 
         if (noticesData.length > 0) {
-          badge.textContent = noticesData.length;
-          badge.classList.remove('hidden');
-
           const latest = noticesData[0];
 
           // 카드 7 [담임선생님의 한마디] 실시간 반영
@@ -969,10 +993,23 @@
             if (msgDateEl) msgDateEl.textContent = latest.date;
           }
 
+          // 공지사항 날짜가 지났는지(어제 또는 그 이전) 검사
+          const isExpired = isNoticeExpired(latest.date);
+
+          // 날짜가 지나지 않은 활성 공지만 뱃지에 표시
+          const activeNotices = noticesData.filter(n => !isNoticeExpired(n.date));
+          if (activeNotices.length > 0) {
+            badge.textContent = activeNotices.length;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+
           const noticeKey = 'hide_notice_' + (latest.date || '') + '_' + (latest.title || '').replace(/\s+/g, '');
           const isHiddenToday = localStorage.getItem(noticeKey);
 
-          if (!isHiddenToday) {
+          // 날짜가 지나지 않았고, 오늘 하루 보지 않기를 누르지 않은 경우에만 팝업 표시
+          if (!isExpired && !isHiddenToday) {
             showNoticePopup(latest, noticeKey);
           }
         } else {
@@ -1003,15 +1040,21 @@
       if (noticesData.length === 0) {
         container.innerHTML = `<div class="text-center py-6 text-gray-400 font-medium">등록된 공지사항이 없습니다.</div>`;
       } else {
-        container.innerHTML = noticesData.map((n, i) => `
-          <div class="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 mb-2">
-            <div class="flex items-center justify-between">
-              <span class="font-extrabold text-gray-900 dark:text-white text-base">${n.title}</span>
-              <span class="text-xs text-gray-400">${n.date || ''}</span>
+        container.innerHTML = noticesData.map((n, i) => {
+          const expired = isNoticeExpired(n.date);
+          return `
+            <div class="p-3.5 rounded-xl ${expired ? 'bg-gray-50/60 dark:bg-slate-800/40 opacity-70' : 'bg-gray-50 dark:bg-slate-800'} border border-gray-100 dark:border-slate-700 mb-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-extrabold text-gray-900 dark:text-white text-base">${n.title}</span>
+                  ${expired ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-500 font-bold">종료</span>' : ''}
+                </div>
+                <span class="text-xs text-gray-400">${n.date || ''}</span>
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-line">${n.content}</p>
             </div>
-            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-line">${n.content}</p>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
       document.getElementById('noticeModal').classList.remove('hidden');
     }
