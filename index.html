@@ -397,7 +397,7 @@
     const SHEET_URLS = {
       substitute: "https://docs.google.com/spreadsheets/d/1h4ABPaC7_n6xh-x6GTnNIjERJJFP0IOZkJtINc8v04w/edit?gid=649167793#gid=649167793", // 결보강
       homework: "https://docs.google.com/spreadsheets/d/1EmKXxKvZJhceQBtuRPeZZjeIhhMz7Q9DYNA9MyjY1-4/edit?usp=sharing", // 수행평가
-      schedule: "", // 학사일정
+      schedule: "https://docs.google.com/spreadsheets/d/1fDkx2uucr1zi0ahQ_tO3-JlVD8yKvg2IaAhsUGfTsyQ/edit?usp=sharing", // 학사일정
       birthday: "", // 생일
       notice: "https://docs.google.com/spreadsheets/d/1Lm6IRVPBPabyGKOU_RmEEI49WYe99ZbrVuiRTIl7EFY/edit?usp=sharing"    // 공지사항
     };
@@ -784,7 +784,7 @@
     }
 
     // 4-3. 카드 4 [학교 학사일정] (schedule 링크 연동)
-    // 헤더: 시작일·종료일·행사명(행사)·대상(대상학년)·상세내용(내용)·준비물
+    // 헤더: 일자(날짜/시작일)·행사명(일정명)·대상(참여대상)·장소·메모(상세내용/준비물)
     async function loadAcademicSchedule() {
       const container = document.getElementById('academicListContainer');
       try {
@@ -795,18 +795,18 @@
         }
 
         const events = rows.map(r => {
-          const startDate = getVal(r, ['시작일', '시작일자', '시작', 'start']);
+          const startDate = getVal(r, ['일자', '날짜', '일시', '시작일', '시작일자', '시작', 'date', 'start']);
           const endDate = getVal(r, ['종료일', '종료일자', '종료', '끝', 'end']);
-          const name = getVal(r, ['행사명', '행사', '일정명', '일정', '제목']);
-          const target = getVal(r, ['대상', '대상학년', '학년']);
-          const details = getVal(r, ['상세내용', '내용', '비고', '설명']);
-          const supplies = getVal(r, ['준비물', '지참물']);
+          const name = getVal(r, ['행사명', '일정명', '행사', '일정', '제목', 'name', 'title']);
+          const target = getVal(r, ['대상', '참여대상', '대상학년', '학년', 'target']);
+          const place = getVal(r, ['장소', '수업장소', '위치', 'room', 'place']);
+          const memo = getVal(r, ['메모', '비고', '상세내용', '내용', '설명', '준비물', '지참물']);
 
           const sObj = parseDateObj(startDate);
           const diffDays = calculateDDay(sObj);
 
-          return { startDate, endDate, name, target, details, supplies, sObj, diffDays };
-        }).filter(e => e.name);
+          return { startDate, endDate, name, target, place, memo, sObj, diffDays };
+        }).filter(e => e.name || e.startDate);
 
         if (events.length === 0) {
           container.innerHTML = `<div class="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/40 text-center text-sm font-medium text-toss-textMuted dark:text-gray-400">등록된 학사일정이 없어요 🚩</div>`;
@@ -821,20 +821,23 @@
 
         container.innerHTML = events.map(e => {
           const badge = getDDayBadge(e.diffDays);
-          const dateRange = (e.endDate && e.endDate !== e.startDate) ? `${e.startDate} ~ ${e.endDate}` : e.startDate;
+          const dateRange = (e.endDate && e.endDate !== e.startDate) ? `${e.startDate} ~ ${e.endDate}` : (e.startDate || '');
+          const infoParts = [];
+          if (dateRange) infoParts.push(dateRange);
+          if (e.target) infoParts.push(`대상: ${e.target}`);
+          if (e.place) infoParts.push(`장소: ${e.place}`);
 
           return `
-            <div class="relative pl-3 pb-1">
+            <div class="relative pl-3 pb-2.5">
               <div class="absolute -left-[19px] top-1.5 w-3 h-3 rounded-full ${e.diffDays === 0 ? 'bg-red-500 ring-4 ring-red-100 dark:ring-red-950 animate-ping' : 'bg-toss-blue'}"></div>
               <div class="flex items-center justify-between">
-                <span class="text-sm font-black text-gray-900 dark:text-white">${e.name}</span>
+                <span class="text-sm font-black text-gray-900 dark:text-white">${e.name || '학사일정'}</span>
                 <span class="text-xs font-extrabold px-2 py-0.5 rounded ${badge.class}">${badge.label}</span>
               </div>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                ${dateRange} ${e.target ? `| 대상: ${e.target}` : ''}
+                ${infoParts.join(' | ')}
               </p>
-              ${e.details ? `<p class="text-xs text-toss-textSecondary dark:text-gray-300 mt-0.5">${e.details}</p>` : ''}
-              ${e.supplies ? `<p class="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">준비물: ${e.supplies}</p>` : ''}
+              ${e.memo ? `<p class="text-xs text-toss-textSecondary dark:text-gray-300 mt-0.5">${e.memo}</p>` : ''}
             </div>
           `;
         }).join('');
