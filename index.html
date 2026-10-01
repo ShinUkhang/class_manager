@@ -965,8 +965,34 @@
           return;
         }
 
+        // 1. 카드 7 [담임선생님의 한마디] 연동: 스프레드시트의 '선생님 한마디' 열 직접 참조
+        const teacherMsgEl = document.getElementById('teacherMessageText');
+        let teacherMessage = '';
+        let teacherDate = '';
+        for (const r of rows) {
+          const msg = getVal(r, ['선생님한마디', '선생님 한마디', '담임선생님의한마디', '담임선생님한마디', '담임의한마디', '한마디', '응원메시지']);
+          if (msg) {
+            teacherMessage = msg;
+            teacherDate = getVal(r, ['일시', '날짜', '작성일', '일자']);
+            break;
+          }
+        }
+
+        if (teacherMsgEl) {
+          if (teacherMessage) {
+            teacherMsgEl.textContent = `"${teacherMessage}"`;
+          } else {
+            teacherMsgEl.textContent = "등록된 담임선생님의 한마디가 없어요 💌";
+          }
+        }
+        if (teacherDate) {
+          const msgDateEl = document.getElementById('messageDate');
+          if (msgDateEl) msgDateEl.textContent = teacherDate;
+        }
+
+        // 2. 학급 공지사항 연동: '내용' 및 '공지제목/제목' 열 참조
         noticesData = rows.map(r => {
-          let title = getVal(r, ['제목', '공지제목', 'title', '공지', '주제']);
+          let title = getVal(r, ['공지제목', '제목', 'title', '주제']);
           const content = getVal(r, ['내용', '공지내용', '상세', 'content', '메시지', '본문', '안내']);
           const date = getVal(r, ['일시', '게시일', '날짜', '작성일', '일자', 'date', '등록일', '시간']);
 
@@ -978,20 +1004,10 @@
             content: content || title || '',
             date: date || ''
           };
-        }).filter(n => n.title || n.content);
+        }).filter(n => n.content);
 
         if (noticesData.length > 0) {
           const latest = noticesData[0];
-
-          // 카드 7 [담임선생님의 한마디] 실시간 반영
-          const teacherMsgEl = document.getElementById('teacherMessageText');
-          if (teacherMsgEl && (latest.content || latest.title)) {
-            teacherMsgEl.textContent = `"${latest.content || latest.title}"`;
-          }
-          if (latest.date) {
-            const msgDateEl = document.getElementById('messageDate');
-            if (msgDateEl) msgDateEl.textContent = latest.date;
-          }
 
           // 공지사항 날짜가 지났는지(어제 또는 그 이전) 검사
           const isExpired = isNoticeExpired(latest.date);
