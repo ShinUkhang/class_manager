@@ -102,13 +102,16 @@
     }
   </style>
 </head>
-<body class="bg-toss-bgLight dark:bg-toss-bgDark text-toss-textPrimary dark:text-gray-100 min-h-screen p-5 md:p-8 flex flex-col justify-between">
+<body class="bg-toss-bgLight dark:bg-toss-bgDark text-toss-textPrimary dark:text-gray-100 min-h-screen p-3 sm:p-5 md:p-8 flex flex-col justify-between">
 
   <!-- Confetti Canvas (순수 JS 물리 파티클 폭죽 엔진) -->
   <canvas id="confettiCanvas"></canvas>
 
+  <!-- 대시보드 전체 래퍼 (기기별 화면 크기 전환 지원) -->
+  <div id="appContainer" class="w-full max-w-7xl mx-auto transition-all duration-300 ease-in-out flex flex-col flex-1">
+
   <!-- ================= 2. 헤더 구성 ================= -->
-  <header class="toss-card bg-toss-cardLight dark:bg-toss-cardDark border border-toss-borderLight dark:border-toss-borderDark px-6 md:px-8 py-5 mb-6 flex flex-wrap items-center justify-between gap-4">
+  <header class="toss-card bg-toss-cardLight dark:bg-toss-cardDark border border-toss-borderLight dark:border-toss-borderDark px-5 sm:px-6 md:px-8 py-5 mb-6 flex flex-wrap items-center justify-between gap-4">
     <!-- 좌측: '청원중 2학년 1반 스마트 알리미' 타이틀과 급훈 -->
     <div class="flex items-center gap-4">
       <div class="w-14 h-14 rounded-2xl bg-toss-blue text-white flex items-center justify-center text-2xl font-black shadow-md flex-shrink-0">
@@ -129,16 +132,36 @@
       </div>
     </div>
 
-    <!-- 우측 상단 액션 바: 실시간 디지털 시계, 다크모드 버튼, 새로고침 버튼 -->
-    <div class="flex items-center gap-3 md:gap-5">
+    <!-- 우측 상단 액션 바: 디지털 시계, 화면전환 세그먼트, 기능 버튼 -->
+    <div class="flex items-center flex-wrap justify-end gap-3 md:gap-4">
       <!-- 실시간 디지털 시계 -->
       <div class="text-right mr-1">
-        <div id="clockDate" class="text-sm md:text-base font-bold text-toss-textSecondary dark:text-gray-400">
+        <div id="clockDate" class="text-xs md:text-sm font-bold text-toss-textSecondary dark:text-gray-400">
           -
         </div>
-        <div id="clockTime" class="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight tabular-nums">
+        <div id="clockTime" class="text-xl md:text-2xl lg:text-3xl font-black text-gray-900 dark:text-white tracking-tight tabular-nums">
           -
         </div>
+      </div>
+
+      <!-- 기기 화면전환 버튼 (휴대폰 / 아이패드 / 웹·칠판 / 자동) -->
+      <div class="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl text-xs font-bold border border-gray-200/60 dark:border-slate-700/60 shadow-xs" id="deviceSwitcher">
+        <button onclick="setDeviceView('auto')" id="btnDeviceAuto" class="device-btn px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="화면 크기 자동 감지 (반응형)">
+          <span>⚡</span>
+          <span class="hidden sm:inline">자동</span>
+        </button>
+        <button onclick="setDeviceView('phone')" id="btnDevicePhone" class="device-btn px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="휴대폰 1열 뷰">
+          <span>📱</span>
+          <span class="hidden sm:inline">휴대폰</span>
+        </button>
+        <button onclick="setDeviceView('tablet')" id="btnDeviceTablet" class="device-btn px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="아이패드/태블릿 2열 뷰">
+          <span>📟</span>
+          <span class="hidden sm:inline">아이패드</span>
+        </button>
+        <button onclick="setDeviceView('desktop')" id="btnDeviceDesktop" class="device-btn px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="웹/전자칠판 3열 와이드 뷰">
+          <span>🖥️</span>
+          <span class="hidden sm:inline">웹·칠판</span>
+        </button>
       </div>
 
       <!-- 액션 버튼 그룹 -->
@@ -169,8 +192,8 @@
     </div>
   </header>
 
-  <!-- ================= 3. 메인 그리드 (3열 반응형 카드 배치) ================= -->
-  <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
+  <!-- ================= 3. 메인 그리드 (반응형 및 화면 전환 대응) ================= -->
+  <main id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1 transition-all duration-300">
 
     <!-- ================= COLUMN 1 ================= -->
     <div class="flex flex-col gap-6">
@@ -277,98 +300,105 @@
     </div>
 
     <!-- ================= COLUMN 3 ================= -->
-    <div class="flex flex-col gap-6">
+    <div id="column3" class="flex flex-col gap-6 md:col-span-2 lg:col-span-1">
+      <div id="column3Inner" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
 
-      <!-- 카드 5 [오늘의 맛있는 급식 🍱]: 나이스(NEIS) 급식 API로 자동 조회한 식단 메뉴와 칼로리 표시 -->
-      <section class="toss-card bg-toss-cardLight dark:bg-toss-cardDark border border-toss-borderLight dark:border-toss-borderDark p-6">
-        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
-          <div class="flex items-center gap-2.5">
-            <span class="text-3xl">🍱</span>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">오늘의 맛있는 급식</h2>
-                <a href="https://cheongwon.sen.ms.kr/76461/subMenu.do" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-toss-blue dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-2 py-0.5 rounded-lg transition inline-flex items-center gap-1 shadow-2xs" title="청원중학교 공식 식단표 열기">
-                  <span>급식표</span>
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                </a>
+        <!-- 카드 5 [오늘의 맛있는 급식 🍱]: 나이스(NEIS) 급식 API로 자동 조회한 식단 메뉴와 칼로리 표시 -->
+        <section class="toss-card bg-toss-cardLight dark:bg-toss-cardDark border border-toss-borderLight dark:border-toss-borderDark p-6 flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+            <div class="flex items-center gap-2.5">
+              <span class="text-3xl">🍱</span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">오늘의 맛있는 급식</h2>
+                  <a href="https://cheongwon.sen.ms.kr/76461/subMenu.do" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-toss-blue dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-2 py-0.5 rounded-lg transition inline-flex items-center gap-1 shadow-2xs" title="청원중학교 공식 식단표 열기">
+                    <span>급식표</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                  </a>
+                </div>
+                <span class="text-xs text-toss-textMuted dark:text-gray-400 font-semibold" id="mealSourceLabel">나이스(NEIS) 조회</span>
               </div>
-              <span class="text-xs text-toss-textMuted dark:text-gray-400 font-semibold" id="mealSourceLabel">나이스(NEIS) 조회</span>
+            </div>
+            <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-2.5 py-1 rounded-full">
+              중식
+            </span>
+          </div>
+
+          <!-- 오늘의 알레르기 유발 식품 한 줄 요약 (급식 정보 있을 때만 표시) -->
+          <div id="allergySummaryBanner" class="hidden mt-3 px-3.5 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 flex items-start sm:items-center gap-2 text-xs font-bold text-red-700 dark:text-red-300">
+            <span class="flex-shrink-0">⚠️</span>
+            <span id="allergySummaryText" class="leading-relaxed"></span>
+          </div>
+
+          <div class="mt-3 bg-[#FFFDF5] dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-2xl p-4">
+            <div id="mealList" class="min-h-[140px] space-y-1.5 text-base md:text-lg font-extrabold text-amber-950 dark:text-amber-100"></div>
+
+            <div id="mealFooter" class="hidden mt-4 pt-3 border-t border-amber-200/50 dark:border-amber-900/50 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300 font-bold">
+              <span id="mealCalories"></span>
+              <span class="text-toss-textMuted dark:text-gray-400 text-[10px]">알레르기 번호 빨간색 강조 표기</span>
             </div>
           </div>
-          <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold px-2.5 py-1 rounded-full">
-            중식
-          </span>
-        </div>
+        </section>
 
-        <!-- 오늘의 알레르기 유발 식품 한 줄 요약 (급식 정보 있을 때만 표시) -->
-        <div id="allergySummaryBanner" class="hidden mt-3 px-3.5 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 flex items-start sm:items-center gap-2 text-xs font-bold text-red-700 dark:text-red-300">
-          <span class="flex-shrink-0">⚠️</span>
-          <span id="allergySummaryText" class="leading-relaxed"></span>
-        </div>
+        <!-- 아이패드 2열 모드 시 생일 + 한마디를 깔끔하게 정렬하는 서브 컨테이너 -->
+        <div class="flex flex-col gap-6">
 
-        <div class="mt-3 bg-[#FFFDF5] dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-2xl p-4">
-          <div id="mealList" class="min-h-[140px] space-y-1.5 text-base md:text-lg font-extrabold text-amber-950 dark:text-amber-100"></div>
+          <!-- 카드 6 [이번 달 생일 친구 🎂]: 이번 달 생일자 명단과 폭죽(Confetti) 축하 효과 -->
+          <section class="toss-card bg-toss-cardLight dark:bg-toss-cardDark border border-toss-borderLight dark:border-toss-borderDark p-6">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div class="flex items-center gap-2.5">
+                <span class="text-3xl">🎂</span>
+                <div>
+                  <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">이번 달 생일 친구</h2>
+                  <span id="birthMonthLabel" class="text-xs text-toss-textMuted dark:text-gray-400 font-semibold">이번 달</span>
+                </div>
+              </div>
+              <!-- 수동 폭죽 버튼 -->
+              <button onclick="fireConfetti()" class="px-3 py-1.5 rounded-xl bg-pink-100 dark:bg-pink-950 text-pink-600 dark:text-pink-300 hover:bg-pink-200 transition font-extrabold text-xs flex items-center gap-1 shadow-xs">
+                🎉 축하 폭죽 팡팡!
+              </button>
+            </div>
 
-          <div id="mealFooter" class="hidden mt-4 pt-3 border-t border-amber-200/50 dark:border-amber-900/50 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300 font-bold">
-            <span id="mealCalories"></span>
-            <span class="text-toss-textMuted dark:text-gray-400 text-[10px]">알레르기 번호 빨간색 강조 표기</span>
-          </div>
-        </div>
-      </section>
+            <div class="mt-4 space-y-2.5" id="birthdayListContainer">
+              <div class="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/40 text-center text-sm font-medium text-toss-textMuted dark:text-gray-400">
+                이번 달은 생일인 친구가 없어요 🎂
+              </div>
+            </div>
+          </section>
 
-      <!-- 카드 6 [이번 달 생일 친구 🎂]: 이번 달 생일자 명단과 폭죽(Confetti) 축하 효과 -->
-      <section class="toss-card bg-toss-cardLight dark:bg-toss-cardDark border border-toss-borderLight dark:border-toss-borderDark p-6">
-        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
-          <div class="flex items-center gap-2.5">
-            <span class="text-3xl">🎂</span>
+          <!-- 카드 7 [담임선생님의 한마디]: 담임교사의 따뜻한 응원 메시지 카드 -->
+          <section class="toss-card bg-gradient-to-br from-blue-50 to-indigo-50/60 dark:from-slate-800/80 dark:to-slate-900 border border-blue-100 dark:border-blue-900/40 p-6 flex flex-col justify-between">
             <div>
-              <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">이번 달 생일 친구</h2>
-              <span id="birthMonthLabel" class="text-xs text-toss-textMuted dark:text-gray-400 font-semibold">이번 달</span>
+              <div class="flex items-center justify-between pb-3 border-b border-blue-100 dark:border-slate-700/60">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">💌</span>
+                  <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">담임선생님의 한마디</h2>
+                </div>
+                <span class="text-xs text-toss-blue dark:text-blue-400 font-black">Today's Message</span>
+              </div>
+
+              <div class="mt-4" id="teacherMessageContainer">
+                <p class="text-base md:text-lg font-bold text-gray-800 dark:text-gray-200 leading-relaxed" id="teacherMessageText">
+                  등록된 담임선생님의 한마디가 없어요 💌
+                </p>
+              </div>
             </div>
-          </div>
-          <!-- 수동 폭죽 버튼 -->
-          <button onclick="fireConfetti()" class="px-3 py-1.5 rounded-xl bg-pink-100 dark:bg-pink-950 text-pink-600 dark:text-pink-300 hover:bg-pink-200 transition font-extrabold text-xs flex items-center gap-1 shadow-xs">
-            🎉 축하 폭죽 팡팡!
-          </button>
-        </div>
 
-        <div class="mt-4 space-y-2.5" id="birthdayListContainer">
-          <div class="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/40 text-center text-sm font-medium text-toss-textMuted dark:text-gray-400">
-            이번 달은 생일인 친구가 없어요 🎂
-          </div>
-        </div>
-      </section>
-
-      <!-- 카드 7 [담임선생님의 한마디]: 담임교사의 따뜻한 응원 메시지 카드 -->
-      <section class="toss-card bg-gradient-to-br from-blue-50 to-indigo-50/60 dark:from-slate-800/80 dark:to-slate-900 border border-blue-100 dark:border-blue-900/40 p-6 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between pb-3 border-b border-blue-100 dark:border-slate-700/60">
-            <div class="flex items-center gap-2">
-              <span class="text-2xl">💌</span>
-              <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">담임선생님의 한마디</h2>
+            <div class="mt-4 pt-3 border-t border-blue-100/80 dark:border-slate-700/50 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-toss-blue text-white flex items-center justify-center font-bold text-xs" id="teacherAvatar">쌤</div>
+                <span class="text-xs font-bold text-gray-600 dark:text-gray-400" id="teacherAuthor">담임교사</span>
+              </div>
+              <span class="text-xs text-toss-textMuted dark:text-gray-500" id="messageDate">오늘</span>
             </div>
-            <span class="text-xs text-toss-blue dark:text-blue-400 font-black">Today's Message</span>
-          </div>
+          </section>
 
-          <div class="mt-4" id="teacherMessageContainer">
-            <p class="text-base md:text-lg font-bold text-gray-800 dark:text-gray-200 leading-relaxed" id="teacherMessageText">
-              등록된 담임선생님의 한마디가 없어요 💌
-            </p>
-          </div>
         </div>
-
-        <div class="mt-4 pt-3 border-t border-blue-100/80 dark:border-slate-700/50 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-full bg-toss-blue text-white flex items-center justify-center font-bold text-xs" id="teacherAvatar">쌤</div>
-            <span class="text-xs font-bold text-gray-600 dark:text-gray-400" id="teacherAuthor">담임교사</span>
-          </div>
-          <span class="text-xs text-toss-textMuted dark:text-gray-500" id="messageDate">오늘</span>
-        </div>
-      </section>
-
+      </div>
     </div>
 
   </main>
+  </div> <!-- end of #appContainer -->
 
   <!-- ================= 공지사항 팝업 모달 ================= -->
   <div id="noticeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
@@ -1422,12 +1452,87 @@
       }
     }
 
+    /* =========================================================================
+       9. 기기별 화면 전환 (휴대폰 / 아이패드 / 웹·칠판 / 자동 감지)
+       ========================================================================= */
+    let currentDeviceMode = localStorage.getItem('device_view_mode') || 'auto';
+
+    function setDeviceView(mode) {
+      currentDeviceMode = mode;
+      localStorage.setItem('device_view_mode', mode);
+
+      const container = document.getElementById('appContainer');
+      const mainGrid = document.getElementById('mainGrid');
+      const col3 = document.getElementById('column3');
+      const col3Inner = document.getElementById('column3Inner');
+      const buttons = {
+        auto: document.getElementById('btnDeviceAuto'),
+        phone: document.getElementById('btnDevicePhone'),
+        tablet: document.getElementById('btnDeviceTablet'),
+        desktop: document.getElementById('btnDeviceDesktop')
+      };
+
+      Object.keys(buttons).forEach(k => {
+        const btn = buttons[k];
+        if (!btn) return;
+        if (k === mode) {
+          btn.className = "device-btn px-2.5 sm:px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 text-toss-blue dark:text-blue-300 shadow-sm font-black transition flex items-center gap-1.5";
+        } else {
+          btn.className = "device-btn px-2.5 sm:px-3 py-1.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition flex items-center gap-1.5";
+        }
+      });
+
+      if (mode === 'phone') {
+        // 휴대폰 1열 뷰 (폭 430px 고정)
+        if (container) container.className = "w-full max-w-[430px] mx-auto transition-all duration-300 ease-in-out flex flex-col flex-1";
+        if (mainGrid) mainGrid.className = "grid grid-cols-1 gap-5 flex-1 transition-all duration-300";
+        if (col3) col3.className = "flex flex-col gap-5";
+        if (col3Inner) col3Inner.className = "grid grid-cols-1 gap-5";
+      } else if (mode === 'tablet') {
+        // 아이패드/태블릿 2열 뷰 (폭 880px)
+        if (container) container.className = "w-full max-w-[880px] mx-auto transition-all duration-300 ease-in-out flex flex-col flex-1";
+        if (mainGrid) mainGrid.className = "grid grid-cols-2 gap-6 flex-1 transition-all duration-300";
+        if (col3) col3.className = "col-span-2";
+        if (col3Inner) col3Inner.className = "grid grid-cols-2 gap-6";
+      } else if (mode === 'desktop') {
+        // 웹/전자칠판 3열 와이드 뷰 (폭 1600px)
+        if (container) container.className = "w-full max-w-[1600px] mx-auto transition-all duration-300 ease-in-out flex flex-col flex-1";
+        if (mainGrid) mainGrid.className = "grid grid-cols-3 gap-6 flex-1 transition-all duration-300";
+        if (col3) col3.className = "col-span-1";
+        if (col3Inner) col3Inner.className = "grid grid-cols-1 gap-6";
+      } else {
+        // auto: 화면 크기에 맞춰 완전 자동 반응형 전환
+        if (container) container.className = "w-full max-w-7xl mx-auto transition-all duration-300 ease-in-out flex flex-col flex-1";
+        if (mainGrid) mainGrid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1 transition-all duration-300";
+        if (col3) col3.className = "flex flex-col gap-6 md:col-span-2 lg:col-span-1";
+        if (col3Inner) col3Inner.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6";
+        updateAutoDeviceIndicator();
+      }
+    }
+
+    function updateAutoDeviceIndicator() {
+      const btn = document.getElementById('btnDeviceAuto');
+      if (!btn) return;
+      const w = window.innerWidth;
+      let devName = '웹·칠판';
+      if (w < 768) devName = '휴대폰';
+      else if (w < 1024) devName = '아이패드';
+      btn.title = `화면 크기 자동 감지 (현재 감지: ${devName})`;
+    }
+
+    window.addEventListener('resize', () => {
+      if (currentDeviceMode === 'auto') {
+        updateAutoDeviceIndicator();
+      }
+    });
+
     // DOM Ready
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark');
         document.getElementById('darkModeIcon').textContent = '☀️';
       }
+      setDeviceView(currentDeviceMode);
       updateClock();
       setInterval(updateClock, 1000);
       selectDay(currentDay);
